@@ -373,6 +373,13 @@ def part_probabilities(macros: MacroWriter, nias: list[str]) -> None:
     macros.add("Nval", str(n))
     macros.add("Nhalf", str(h))
     macros.add("NisOdd", "odd" if n % 2 else "even", math_mode=False)
+    macros.add(
+        "HalfNote",
+        rf"Since $N$ is odd, ``$N/2$ heads'' is taken as $\lfloor N/2\rfloor={h}$."
+        if n % 2
+        else rf"Since $N$ is even, the equal split $N/2={h}$ is a valid macrostate.",
+        math_mode=False,
+    )
     macros.add("TotalStates", sci(2.0**n, 4))
 
     results = {}
@@ -487,7 +494,7 @@ def part_thermo_limit(macros: MacroWriter) -> None:
     # the exponent itself is ~1e22, so only its leading digits are meaningful
     macros.add("TLPeight", rf"10^{{{sci(log10_p8, 3)}}}")
 
-    # Gaussian limit check for N = 129-type sizes
+    # narrowing of the distribution in k/N as N grows
     fig, ax = plt.subplots(figsize=(5.2, 3.2))
     for n in (1e2, 1e4, 1e6, 1e8):
         # dense grid within +-8 sigma of the peak so narrow peaks are resolved
