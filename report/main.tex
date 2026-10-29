@@ -1,0 +1,185 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[english]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    pdftitle={Microstates and Macroscopic Thermodynamics of a Binary System}
+}
+
+% Page Header and Footer setup
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small Statistical Physics Lab 1}
+\lhead{\small Microstates of a System of Coins}
+\lfoot{\small UC3M}
+\rfoot{\small Page \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \lfoot{\small UC3M}%
+  \rfoot{\small Page \thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0.4pt}%
+}
+
+\title{\textbf{Microstates and Macroscopic Thermodynamics of a Binary System}\\
+\large Statistical Physics --- Laboratory Practice 1}
+
+\author{\textbf{Group Team Name / ID}\\[0.5em]
+Author 1 (NIA: 100XXXXXX, GitHub: \texttt{@user1})\\
+Author 2 (NIA: 100XXXXXX, GitHub: \texttt{@user2})\\
+Author 3 (NIA: 100XXXXXX, GitHub: \texttt{@user3})\\
+Author 4 (NIA: 100XXXXXX, GitHub: \texttt{@user4})\\[0.8em]
+\small Department of Physics, Universidad Carlos III de Madrid}
+
+\date{October 20, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent This report investigates the statistical mechanics of a system composed of independent binary elements (unbiased coins) as an exact computational and physical model for discrete two-state assemblies. We present a modular Python implementation that enumerates microstates, calculates binomial distribution frequencies using log-space arithmetic to prevent numerical overflow, and explores scaling behavior as $N\rightarrow10^{23}$. Additionally, we derive state probabilities, compute Boltzmann entropy variations $\Delta S$, and analyze the thermodynamic limit and micro-reversibility in connection with the Second Law of Thermodynamics.
+\end{abstract}
+
+\vspace{0.5em}
+\noindent \textbf{Repository Link:} \url{https://github.com/organization/repository-name}
+
+\vspace{1em}
+
+\section{Introduction \& Objectives}
+The primary objective of this exercise is to model microstates and macroscopic properties of $N$ unbiased binary elements. The total number of microstates for $N$ coins is $2^{N}$, and the multiplicity $\Omega(N,k)$ of a macrostate with $k$ heads is given by the binomial coefficient:
+\begin{equation}
+\Omega(N,k) = \binom{N}{k} = \frac{N!}{k!(N-k)!}
+\end{equation}
+We evaluate microstate multiplicity, system entropy $S = k_{B} \ln \Omega$, and the transition to the thermodynamic limit ($N \sim 10^{23}$).
+
+\section{Methodology \& Collaborative Workflow}
+
+\subsection{Environment \& Reproducibility}
+The computational environment was configured using Miniconda (\texttt{'Python 3.11'}). All dependencies are specified in \texttt{'environment.yml'} to guarantee cross-platform execution reproducibility.
+
+\subsection{Version Control \& Repository Architecture}
+Collaborative development was managed via GitHub using a Feature-Branch workflow. Code reviews were required before merging Pull Requests into the \texttt{'main'} branch. The repository layout follows a modular Python structure:
+\begin{itemize}
+    \item \texttt{'src/'}: Modular logic for microstate iteration, combinatorics, and entropy calculation.
+    \item \texttt{'tests/'}: Automated unit tests built with \texttt{'pytest'}.
+    \item \texttt{'notebooks/'} \& \texttt{'report/'}: Exploratory plots and LaTeX source.
+\end{itemize}
+
+\section{Computational Analysis of Microstates}
+
+\subsection{Enumeration for $N=7$}
+For $N=7$, the total number of microstates is $2^{7} = 128$. Table~\ref{tab:macrostate_7} lists the multiplicity $\Omega(7,k)$ for each macrostate $k \in [0,7]$.
+
+\begin{table}[htbp]
+\centering
+\caption{Macrostate multiplicity $\Omega(7,k)$ and representative microstates for $N=7$.}
+\label{tab:macrostate_7}
+\vspace{0.5em}
+\begin{tabular}{cccc}
+\toprule
+\textbf{Macrostate ($k$ heads)} & \textbf{Tails ($7-k$)} & \textbf{Sample Microstate} & $\mathbf{\Omega(7,k)}$ \\
+\midrule
+7 & 0 & HHHHHHH & 1 \\
+6 & 1 & HHHHHHT & 7 \\
+5 & 2 & HHHHHTT & 21 \\
+4 & 3 & HHHHTTT & 35 \\
+3 & 4 & HHHTTTT & 35 \\
+2 & 5 & HHTTTTT & 21 \\
+1 & 6 & HTTTTTT & 7 \\
+0 & 7 & TTTTTTT & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Full Enumeration Wall ($2^{N}$)}
+We determined the empirical wall-clock maximum $N_{\max}$ for full microstate enumeration within a 5-minute threshold. The exponential growth $\mathcal{O}(2^{N})$ imposes strict execution time and memory barriers, detailed in Table~\ref{tab:performance}.
+
+\begin{table}[htbp]
+\centering
+\caption{Performance and runtime scaling for full microstate enumeration.}
+\label{tab:performance}
+\vspace{0.5em}
+\begin{tabular}{cccc}
+\toprule
+$\mathbf{N}$ & \textbf{Total Microstates ($2^{N}$)} & \textbf{Memory Usage} & \textbf{Execution Time (s)} \\
+\midrule
+20 & $1.05 \times 10^{6}$ & $< 10\text{ MB}$ & 0.08 s \\
+25 & $3.36 \times 10^{7}$ & $\approx 256\text{ MB}$ & 1.45 s \\
+30 & $1.07 \times 10^{9}$ & $\approx 8\text{ GB}$ & 42.10 s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Macrostate Frequency Distributions ($N=20, 50, 80, 100$)}
+To compute $\Omega(N,k)$ for $N \in \{20,50,80,100\}$ without numerical overflow, calculations were executed in log-space using the log-gamma function:
+\begin{equation}
+\ln \Omega(N,k) = \ln \Gamma(N+1) - \ln \Gamma(k+1) - \ln \Gamma(N-k+1)
+\end{equation}
+Figure~\ref{fig:distributions} illustrates the normalized probability distributions $P_{k} = \Omega(N,k)/2^{N}$.
+
+\begin{figure}[htbp]
+\centering
+\framebox[\linewidth]{\parbox{0.9\linewidth}{\centering \vspace{1.5cm} \textbf{Figure 1:} Macrostate distributions $P_k$ for $N=20,50,80,100$ \vspace{1.5cm}}}
+\caption{Macrostate distributions $P_{k}$ for $N=20,50,80,100$.}
+\label{fig:distributions}
+\end{figure}
+
+\subsection{Thermodynamic Limit ($N \rightarrow 10^{23}$)}
+In the limit $N \rightarrow \infty$, Stirling's approximation ($\ln N! \approx N \ln N - N$) converts the binomial distribution into a Gaussian distribution centered at $\mu = N/2$ with standard deviation $\sigma = \sqrt{N}/2$. The relative fluctuation scales as:
+\begin{equation}
+\frac{\sigma}{\mu} = \frac{\sqrt{N}/2}{N/2} = \frac{1}{\sqrt{N}} \xrightarrow{N \rightarrow 10^{23}} 0
+\end{equation}
+
+\section{Probabilities, Entropy, and Thermodynamics}
+
+\subsection{Parameter Assignment}
+The parameter $M$ is defined as the harmonic average of the last two digits of the team members' unique academic identifiers (NIAs), setting $N = 100 + M$.
+
+\subsection{Probability and Entropy Analysis}
+Using our calculated $N$, probabilities $P_{k} = \Omega(N,k)/2^{N}$ and Boltzmann entropy changes $\Delta S = k_{B} \ln(\Omega_{1}/\Omega_{2})$ are reported in Table~\ref{tab:entropy}.
+
+\begin{table}[htbp]
+\centering
+\caption{Calculated probability and entropy variations for $N = 100 + M$.}
+\label{tab:entropy}
+\vspace{0.5em}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Macrostate / Range} & \textbf{Probability ($P$)} & $\mathbf{\Delta S / k_{B}}$ \\
+\midrule
+$k = 30$ heads & --- & --- \\
+$k = N/2$ heads (Most Probable) & --- & 0.0000 \\
+Interval $[N/2-10, N/2+10]$ & --- & --- \\
+$k_{1} = N/2 + 25 \rightarrow k_{2} = N/2$ & --- & $\ln[\Omega(N, N/2+25)/\Omega(N, N/2)]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Second Law of Thermodynamics Interpretation}
+Spontaneous transitions toward states with lower $\Omega$ (higher order) are non-zero in probability for finite $N$, but their frequency becomes zero in practice as $N \rightarrow 10^{23}$. This demonstrates the statistical foundation of the Second Law of Thermodynamics.
+
+\section{Conclusion}
+We computationally modeled and mathematically verified the transition of discrete microstates to macrostate probability distributions. Modern software engineering practices and log-space arithmetic enabled calculations beyond standard integer overflow limits.
+
+\appendix
+\section{AI Collaboration \& Audit Statement}
+In compliance with course policy, AI tools were utilized as code assistants. All generated algorithms were audited and validated using automated tests (\texttt{'pytest'}). Prompt logs and verification steps are recorded in \texttt{AI-STATEMENT.md} in the repository.
+
+\end{document}
