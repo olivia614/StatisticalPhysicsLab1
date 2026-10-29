@@ -1,0 +1,10 @@
+{
+  "team_name": "Group X",
+  "repository": "https://github.com/olivia614/StatisticalPhysicsLab1",
+  "members": [
+    {"name": "Rocío Fernández Jover", "nia": "100523129", "github": "user1"},
+    {"name": "J. Cantillana", "nia": "100496704", "github": "jcantillana04"},
+    {"name": "Olivia", "nia": "100XXXXXX", "github": "olivia614"},
+    {"name": "Author 4", "nia": "100XXXXXX", "github": "user4"}
+  ]
+}

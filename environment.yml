@@ -6,6 +6,6 @@ dependencies:
   - python=3.11
   - numpy>=1.24
   - scipy>=1.10
-  - matplotlib
+  - matplotlib>=3.7
   - pytest>=7.0
   - jupyter
