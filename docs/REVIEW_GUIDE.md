@@ -47,9 +47,11 @@ Line references are to the state of the code on 2026-10-29.
   guide), `.gitignore`.
 - Branches:
   - `feature/latex-report`: the team's template.
-  - `feature/lab1-implementation`: all code, report and AI log.
-  - `docs/review-guide`: this file.
-- **Nothing has been committed yet.** All work so far is uncommitted in the working tree.
+  - `feature/lab1-implementation`: all code, report and AI log. Commits: `first implementation code`,
+    `updated version with NIAs`.
+  - `docs/review-guide`: this file, rebased on top of `feature/lab1-implementation`.
+- **Not pushed yet**, and nothing is merged into `main`. `docs/ai_plans/` (the saved plan that
+  `AI_STATEMENT.md` links to) is still untracked; commit it.
 
 **What you must understand**
 - Feature-branch workflow, why `main` is protected, and what a PR review is for.
@@ -57,8 +59,8 @@ Line references are to the state of the code on 2026-10-29.
   hand; you change the code or `team.json` and rerun `main.py`.
 
 **What to review / verify**
-- [ ] **Commit and open PRs.** Commit the implementation on `feature/lab1-implementation` and this guide
-      on `docs/review-guide`, then open PRs into `main`. **Each PR must be approved by a teammate other
+- [ ] **Push and open PRs.** Push `feature/lab1-implementation` and `docs/review-guide`, then open PRs into
+      `main`. **Each PR must be approved by a teammate other
       than the author.**
 - [ ] **Spread the contributions.** The rubric rewards "active contributions from **all** team members".
       Make sure everyone has real commits: fixing `team.json`, filling in the AI log, reviewing,
@@ -242,7 +244,10 @@ Line references are to the state of the code on 2026-10-29.
 **What was done**
 - **M and N.** `m_from_nias` gives M = **arithmetic** mean of the last two NIA digits, rounded half-up. You
   chose this on 2026-10-29: the slides say "average" and the old template said "harmonic". So N = 100 + M.
-- **Odd N.** For odd N, "N/2" means ⌊N/2⌋. The report states this.
+- **Our system.** NIAs 100496704, 100523129, 100534604 and 100599060 give last two digits 04, 29, 04 and 60.
+  Their mean is 24.25, so **M = 24 and N = 124**.
+- **Parity of N.** N = 124 is even, so N/2 = 62 is an exact macrostate. The code still handles odd N
+  (N/2 → ⌊N/2⌋), and `main.py` writes the matching sentence into the report (`\HalfNote`).
 - **Questions 1–4.** `prob` gives Ω/2^N in log-space. `prob_range` sums with log-sum-exp.
   `prob_tails_range` converts a tails window to a heads window (heads = N − tails).
 - **Questions 5–7.** ΔS/k_B = ln Ω(k₂)/Ω(k₁), for the transition **in the order the slide lists it**
@@ -252,8 +257,22 @@ Line references are to the state of the code on 2026-10-29.
 - **Question 9.** P(N/2)/P(M ± 10), interpreted as k = M + 10 and k = M − 10 heads.
 - **Figure 4.** Panel (a) shows P_k with the ±10 band and markers at 30 and M ± 10. Panel (b) shows S/k_B
   with the states used in questions 5–8.
-- **Current numbers.** They use only 2 of the 4 NIAs (N = 117) and **will change** once `team.json` is
-  complete.
+- **Our results for N = 124.** Memorise the orders of magnitude for the defense:
+
+  | Question | Quantity | Value |
+  |---|---|---|
+  | 1 | P(k = 30) | 2.46 × 10⁻⁹ |
+  | 2 | P(k = 62) | 0.0715 |
+  | 3 | P(52 ≤ k ≤ 72) heads | 0.9411 |
+  | 4 | P(42 ≤ tails ≤ 82) | 0.999796 |
+  | 5 | ΔS, 87 → 62 heads | +10.29 k_B = 1.42 × 10⁻²² J/K |
+  | 6 | ΔS, 72 → 62 heads | +1.61 k_B = 2.22 × 10⁻²³ J/K |
+  | 7 | ΔS, 62 → 20 heads | −30.86 k_B = −4.26 × 10⁻²² J/K |
+  | 8 | Mean wait for exactly 8 heads (1 toss/s) | 1.93 × 10²⁵ s ≈ 6.1 × 10¹⁷ years |
+  | 9 | P(62)/P(34), P(62)/P(14) | 4.43 × 10⁵, 1.40 × 10¹⁸ |
+
+  These come from `report/results.tex`. If `team.json` changes, rerun `python main.py` and the values
+  update everywhere.
 
 **What you must understand**
 - **Each formula, and why P = Ω/2^N.** All microstates are equally likely for fair coins.
@@ -261,12 +280,14 @@ Line references are to the state of the code on 2026-10-29.
 - **Why the waiting time is 1/p.** Look up the geometric distribution.
 
 **What to review / verify (judgement calls; the team must agree)**
-- [ ] **Complete `team.json`** with all NIAs, names and GitHub handles, then rerun `python main.py`.
-      The GitHub handles currently in the file are placeholders, except `jcantillana04` and `olivia614`.
+- [ ] **Finish `team.json`.** The NIAs are done. Still to fill in: the names of members 3–4 (currently
+      "Author 3", "Author 4"), the GitHub handles (`user1`, `user3`, `user4`; Olivia's is `olivia614`) and
+      the team name ("Group X"). Then rerun `python main.py` so the author block updates.
 - [ ] **Rounding of M.** The guide doesn't specify it. We round half-up and report the exact mean as well.
       OK?
-- [ ] **Q4 for odd N.** "Between N/2 − 20 and N/2 + 20 tails", with N/2 → ⌊N/2⌋. The window is then
-      slightly asymmetric in heads. Check the result.
+- [ ] **Q4 tails vs. heads.** "Between N/2 − 20 and N/2 + 20 tails". With N = 124 even, the window
+      42–82 tails is the same as 42–82 heads, by symmetry. Be ready to explain why the answer is identical to
+      a heads window. (For an odd N the window would be slightly asymmetric in heads.)
 - [ ] **Q7 sign.** ΔS for "N/2 and 20 heads" is computed as N/2 → 20, so it is **negative**. Questions 5 and
       6 are computed towards N/2, so they are positive. Is that the reading you want, or should all three
       be reported as magnitudes?
@@ -286,7 +307,8 @@ Line references are to the state of the code on 2026-10-29.
 **What was done**
 - The report argues that nothing contradicts the Second Law. In statistical mechanics the law is
   **probabilistic**: low-entropy states are allowed but exponentially rare, with relative weight e^(ΔS/k_B).
-  For N = 117 the fluctuations are visible (about 5% of tosses fall outside ±10); for N = 10²³ they are
+  For N = 124 the fluctuations are visible: about 5.9% of tosses fall outside 62 ± 10, and going from 62 to
+  20 heads is "only" e^30.9 ≈ 2.5 × 10¹³ times rarer than the reverse. For N = 10²³ such fluctuations are
   never seen.
 
 **What you must understand**
@@ -311,8 +333,8 @@ Line references are to the state of the code on 2026-10-29.
 - The author block comes from `report/authors.tex`, which is generated from `team.json`.
 - **Page count:** 9 pages. The body is pages 1–7 (the limit is "about 5, maximum 8, excluding the title
   page"). Appendices: AI statement, Monte Carlo check, N = 7 listing, code excerpts.
-- The report was compiled with Tectonic (XeLaTeX engine) with no warnings. `report/main.pdf` is a
-  **draft** with the 2-NIA numbers.
+- The report was compiled with Tectonic (XeLaTeX engine) with no warnings. `report/main.pdf` has the
+  final numbers (N = 124) but still has placeholder names in the author block.
 
 **What to review / verify**
 - [ ] **Compile it yourself.** Upload `report/` to Overleaf, or use MiKTeX/TeX Live with `pdflatex`. Check
