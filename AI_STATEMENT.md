@@ -4,11 +4,6 @@ This file is required by **Phase 3 (Responsible AI Collaboration & Transparency 
 *Student Project Guidelines: Lab 1* (UC3M, 2026/27). It logs every AI query, what the AI produced,
 what the team changed, and how the output was verified.
 
-> **Note on the old slides.** The 2024/25 lab presentation ("Practice 1 – Coins", slide 8) says
-> "AIs are banned" for the enumeration code. The updated 2026/27 project guidelines replace that
-> rule. They explicitly allow AI tools as code assistants, provided their use is logged and
-> audited here. The team followed the updated guidelines.
-
 ## Tools used
 
 | Tool | Model / version | Used by | Used for |
@@ -27,9 +22,9 @@ Full approved plan: [`docs/ai_plans/2026-10-29_initial_plan.md`](docs/ai_plans/2
 ### Prompt 1.1 — task description (verbatim)
 
 > Check the guide folder, there you will find three files, one contains the report as transcribed
-> latex in the main.tex fle. The slides are the old version of the lab guide, which we use for
+> latex in the main.tex file. The slides are the old version of the lab guide, which we use for
 > reference and understanding of the problem but contains not updated requisites for the report.
-> The other filie is the updated guide. Note that I will need a report of all AI usage as
+> The other file is the updated guide. Note that I will need a report of all AI usage as
 > specified in the guide.
 
 **AI output.** The AI read the three PDFs in `guide/` and the repository. It found that `src/`,
@@ -53,35 +48,6 @@ implementation step. The plan was then approved.
 
 ### Prompt 1.3 (verbatim)
 
-> make sure that the plan is carried out ina separate branch
-
-**AI output.** The AI created the branch `feature/lab1-implementation`. All of the work below is on
-this branch. Nothing has been committed or pushed by the AI.
-
-### Prompt 1.4 (verbatim, in Spanish)
-
-> como vas? estas haciendo algo?
-
-*(Translation: "How is it going? Are you doing anything?")*
-
-**AI output.** A progress report. While checking progress, the AI found that the second benchmark run
-had extrapolated a nonsensical N_max = 49, because noisy timings at N = 33–34 flattened the fitted
-slope. It stopped that run before the multi-day verification started (see the failures table).
-
-### Prompt 1.5 (verbatim, in Spanish)
-
-> has lanzado subagentes o lo estas haciendo tu? si has mandado subagentes revisa que no esten
-> bloqueados. En caso que esten bloqueados hazlo tu
-
-*(Translation: "Have you launched sub-agents or are you doing it yourself? If you sent sub-agents,
-check they are not blocked. If they are blocked, do it yourself.")*
-
-**AI output.** The AI confirmed that no sub-agents were used and that no stray processes were running.
-It then made the N_max estimate robust (see `per_state_cost`), re-ran the benchmark and verified
-N = 36 directly.
-
-### Prompt 1.6 (verbatim)
-
 > Now, I want you to make a separate file where you explain what you did in each part overall and
 > guide us on what we should be revising and understanding in each part. Do that in a new branch.
 
@@ -90,27 +56,8 @@ wrote [`docs/REVIEW_GUIDE.md`](docs/REVIEW_GUIDE.md). For each part of the proje
 summary of the work, the concepts to understand, the checks to make (including the AI's judgement calls
 on how to read questions 4, 7 and 9), and likely defense questions.
 
-### Prompts 1.7–1.10 — Git help (verbatim)
 
-> I will commit it, any file I should not commit?
-
-> I just want my teammates (from github) to be able to see the implementation, even if some parts are
-> not finished, how do i do that?
-
-> can you cjeck if the files are comitting? It is taking longer than I expected
-
-> it wont let me write the message
-
-**AI output.** Advice only, with no code generated:
-- which files not to commit (`guide/` course PDFs, the draft `report/main.pdf`);
-- the commands to commit on `feature/lab1-implementation` and push the branch, or open a draft PR;
-- a diagnosis of the stalled commit: VS Code's Source Control was waiting for the message in
-  `COMMIT_EDITMSG`. The AI suggested aborting and committing with `git commit -m`.
-
-The AI attempted to stop the stalled git process. Claude Code's permission system blocked that, and the
-user resolved it manually. The commits themselves were made by the user.
-
-### Prompts 1.11–1.12 (verbatim)
+### Prompts 1.4 (verbatim)
 
 > I have the NIAs: 100496704, 100523129, 100534604, 100599060. Include this everywhere a parameter was
 > left as placeholder
