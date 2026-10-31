@@ -1,1 +1,195 @@
+# AI Usage Statement — Statistical Physics Lab 1
 
+This file is required by **Phase 3 (Responsible AI Collaboration & Transparency Protocol)** of the
+*Student Project Guidelines: Lab 1* (UC3M, 2026/27). It logs every AI query, what the AI produced,
+what the team changed, and how the output was verified.
+
+> **Note on the old slides.** The 2024/25 lab presentation ("Practice 1 – Coins", slide 8) says
+> "AIs are banned" for the enumeration code. The updated 2026/27 project guidelines replace that
+> rule. They explicitly allow AI tools as code assistants, provided their use is logged and
+> audited here. The team followed the updated guidelines.
+
+## Tools used
+
+| Tool | Model / version | Used by | Used for |
+|------|-----------------|---------|----------|
+| Claude Code (VS Code extension) | Claude Opus 5.5 (`claude-opus-5-5`) | jcantillana04 | Planning, code in `src/`, `tests/`, `main.py`, notebook, LaTeX report, this file |
+
+*(Add a row for every other tool a team member used, e.g. ChatGPT or GitHub Copilot.)*
+
+---
+
+## Session 1 — 2026-10-29 — Claude Code (jcantillana04)
+
+Branch: `feature/lab1-implementation` (created from `feature/latex-report`).
+Full approved plan: [`docs/ai_plans/2026-10-29_initial_plan.md`](docs/ai_plans/2026-10-29_initial_plan.md).
+
+### Prompt 1.1 — task description (verbatim)
+
+> Check the guide folder, there you will find three files, one contains the report as transcribed
+> latex in the main.tex fle. The slides are the old version of the lab guide, which we use for
+> reference and understanding of the problem but contains not updated requisites for the report.
+> The other filie is the updated guide. Note that I will need a report of all AI usage as
+> specified in the guide.
+
+**AI output.** The AI read the three PDFs in `guide/` and the repository. It found that `src/`,
+`tests/` and a working `main.py` were missing, and asked four clarifying questions:
+
+| Question | Team answer |
+|----------|-------------|
+| Scope of the work | Full project (code, tests, figures, report, AI log) |
+| NIAs for N = 100 + M | Make M a parameter (NIAs read from `team.json` / `--nias`) |
+| Arithmetic vs. harmonic mean for M (the slides and the template disagree) | **Arithmetic** (as in the slides) |
+| Detail of the AI log | Full per-prompt log plus a report appendix |
+
+It then wrote an implementation plan (see link above).
+
+### Prompt 1.2 (verbatim)
+
+> Save the plan for track record and ask me again to accept this plan
+
+**AI output.** The plan was saved to `docs/ai_plans/2026-10-29_initial_plan.md` as the first
+implementation step. The plan was then approved.
+
+### Prompt 1.3 (verbatim)
+
+> make sure that the plan is carried out ina separate branch
+
+**AI output.** The AI created the branch `feature/lab1-implementation`. All of the work below is on
+this branch. Nothing has been committed or pushed by the AI.
+
+### Prompt 1.4 (verbatim, in Spanish)
+
+> como vas? estas haciendo algo?
+
+*(Translation: "How is it going? Are you doing anything?")*
+
+**AI output.** A progress report. While checking progress, the AI found that the second benchmark run
+had extrapolated a nonsensical N_max = 49, because noisy timings at N = 33–34 flattened the fitted
+slope. It stopped that run before the multi-day verification started (see the failures table).
+
+### Prompt 1.5 (verbatim, in Spanish)
+
+> has lanzado subagentes o lo estas haciendo tu? si has mandado subagentes revisa que no esten
+> bloqueados. En caso que esten bloqueados hazlo tu
+
+*(Translation: "Have you launched sub-agents or are you doing it yourself? If you sent sub-agents,
+check they are not blocked. If they are blocked, do it yourself.")*
+
+**AI output.** The AI confirmed that no sub-agents were used and that no stray processes were running.
+It then made the N_max estimate robust (see `per_state_cost`), re-ran the benchmark and verified
+N = 36 directly.
+
+### Prompt 1.6 (verbatim)
+
+> Now, I want you to make a separate file where you explain what you did in each part overall and
+> guide us on what we should be revising and understanding in each part. Do that in a new branch.
+
+**AI output.** The AI created the branch `docs/review-guide` (from `feature/lab1-implementation`) and
+wrote [`docs/REVIEW_GUIDE.md`](docs/REVIEW_GUIDE.md). For each part of the project the guide gives a
+summary of the work, the concepts to understand, the checks to make (including the AI's judgement calls
+on how to read questions 4, 7 and 9), and likely defense questions.
+
+### Prompts 1.7–1.10 — Git help (verbatim)
+
+> I will commit it, any file I should not commit?
+
+> I just want my teammates (from github) to be able to see the implementation, even if some parts are
+> not finished, how do i do that?
+
+> can you cjeck if the files are comitting? It is taking longer than I expected
+
+> it wont let me write the message
+
+**AI output.** Advice only, with no code generated:
+- which files not to commit (`guide/` course PDFs, the draft `report/main.pdf`);
+- the commands to commit on `feature/lab1-implementation` and push the branch, or open a draft PR;
+- a diagnosis of the stalled commit: VS Code's Source Control was waiting for the message in
+  `COMMIT_EDITMSG`. The AI suggested aborting and committing with `git commit -m`.
+
+The AI attempted to stop the stalled git process. Claude Code's permission system blocked that, and the
+user resolved it manually. The commits themselves were made by the user.
+
+### Prompts 1.11–1.12 (verbatim)
+
+> I have the NIAs: 100496704, 100523129, 100534604, 100599060. Include this everywhere a parameter was
+> left as placeholder
+
+> file is closed, and leave the names as placeholders we'll fill it manually
+
+**AI output.**
+- `team.json` now holds all four NIAs, which gives M = (29 + 04 + 04 + 60)/4 = 24.25 → 24 and
+  **N = 124**. All report numbers were regenerated with `python main.py`.
+- Because N is now even, the report's "N/2" sentence is generated for either parity (`\HalfNote`).
+- `notebooks/exploration.ipynb` now reads N from `team.json` instead of hard-coding it.
+- The report was recompiled and checked.
+- Member names and GitHub handles were left as placeholders, as requested.
+
+### Prompt 1.13 (verbatim)
+
+> update the guide now
+
+**AI output.** `docs/REVIEW_GUIDE.md` was updated on `docs/review-guide`:
+- N = 124 / M = 24 throughout, with a quick-reference table of the question 1–9 results (checked against
+  `report/results.tex`);
+- notes on parity handling for even N;
+- the Q4 symmetry remark and the Second Law figures for N = 124;
+- the current Git and PDF status.
+
+### Files generated in Session 1
+
+| File | Content | Generated by AI | Human modifications |
+|------|---------|-----------------|---------------------|
+| `src/microstates.py` | Bit-encoded generator `iter_microstates` (`1 << N`), `bit_count` macrostates, N = 7 table, chunked/multiprocess NumPy popcount enumeration, benchmark + exponential fit | Yes | *(team to fill in)* |
+| `src/combinatorics.py` | `binom_exact` (product formula, slide hint 2), `binom_float`, `log_binom` (log-gamma, guide eq. 1), Pascal row, float-overflow limits | Yes | |
+| `src/thermodynamics.py` | `m_from_nias`, probabilities (log-sum-exp ranges), ΔS, waiting time, likelihood ratio, Gaussian limit, Monte Carlo tosses | Yes | |
+| `tests/test_*.py`, `tests/conftest.py` | 68 pytest tests | Yes | |
+| `main.py` | CLI: runs every question, writes `report/figures/*.pdf`, `report/results.tex`, `report/tables/*.tex` | Yes | |
+| `report/main.tex` | Full report built on the team's template; all numbers come from `results.tex` | Yes (template by team) | |
+| `notebooks/exploration.ipynb` | Small interactive checks | Yes | |
+| `team.json` | Team metadata. All four NIAs were supplied by the team (prompt 1.11); names and GitHub handles of members 3–4 (and member 1's handle) are placeholders | Yes | **Names and handles to be filled in by the team** |
+| `.gitignore`, `environment.yml` (`matplotlib>=3.7`) | Housekeeping | Yes | |
+
+### Verification performed
+
+1. **Unit tests** (`python -m pytest -q`): 68 passed. The tests compare every routine against
+   independent references:
+   - enumeration histograms vs. `math.comb` for N = 0 … 16 (generator) and N ≤ 20 (vectorised, 1 and 2 processes);
+   - `log_binom` vs. `log(math.comb)` to relative 1e-12 for N up to 1000, and vs. Stirling at N = 1e23;
+   - Σ Ω = 2^N, symmetry, normalisation of probabilities, ΔS sign conventions, waiting time = 2^N / Ω;
+   - known value Ω(100, 50) = 1.0089e29 and P(100, 50) = 0.07959 (slides 10 and 12 of the presentation).
+2. **Monte Carlo cross-check**: 100,000 simulated tosses of 100 coins against the exact distribution,
+   χ² = 41.3 for 42 degrees of freedom.
+3. **Benchmark verification run**: N = 36 (6.9×10¹⁰ microstates) was fully enumerated in 99 s on
+   16 processes, and the histogram matched `math.comb` exactly (`report/data/benchmark.json`).
+   An earlier run under heavier machine load took 322 s for N = 37, just over the 5-minute limit.
+4. **LaTeX build**: the report compiles without errors or warnings (checked with the Tectonic engine;
+   9 pages, body = pages 1–7, appendices from page 8). The rendered pages were inspected visually.
+5. **To do by the team**: re-derive the formulas in Sections 3–4 of the report by hand, and check
+   the physics discussion before submission.
+
+### AI failures and how they were resolved
+
+| Problem | Detected by | Resolution |
+|---------|-------------|------------|
+| `float_overflow_limits()` first compared logarithms and returned N = 1025 for overflow of 2^N. The true value is 1024: `1024·ln 2` and `ln(float max)` agree to rounding error. | `test_float_overflow_limits` | Switched to exact integer comparisons (`2**n > int(float_max)`). |
+| `numpy.polyfit` and every `numpy.linalg` call (also used internally by Matplotlib) crashed Python with Windows fatal error `0xc06d007f`. The threaded MKL backend in the conda-forge environment failed to load its OpenMP runtime. | Running the tests / `main.py` | Set `MKL_THREADING_LAYER=SEQUENTIAL` before importing NumPy (`main.py`, `tests/conftest.py`). Also replaced `polyfit` with a closed-form least-squares fit. The Conda environment itself was not modified. |
+| Design risk: a naive `list(range(1 << N))` or storing all microstates needs 8·2^N bytes (8 GB at N = 30). | Planning | Generators (`yield`) and fixed-size chunks of 2^22 states keep memory constant (≈ 100 MB per process). |
+| The first version of `benchmark()` timed each run with `tracemalloc` active. Tracing slows pure-Python loops several-fold, so the generator timings would have been inflated. | AI self-review during the first benchmark run (run aborted) | Timing runs now execute without tracing; peak memory is measured in a separate probe run. |
+| Fitting a free slope to noisy timings (other load on the laptop, thermal throttling) gave slopes far from 1 and absurd extrapolations: N_max = 49 in one run, which would have taken days to verify. Process-pool start-up (~3 s on Windows) also dominated the small-N vectorised runs. | Checking benchmark progress | Reuse one warmed-up process pool. Fit only the 4 largest N. Estimate N_max from the theoretical law t = c·2^N with c = median(t/2^N) (`per_state_cost`, unit-tested with an outlier). Cap verification at 3 coins beyond the largest timed N, and step down if a run exceeds 300 s. |
+| `\input` of generated table rows inside `tabular` failed (`Misplaced \noalign`): LaTeX's `\input` is not expandable. | LaTeX compilation | Added `\tabinput`, which uses the expandable TeX primitive `\@@input`. |
+| The AI first wrote an invented GitHub handle for one member in `team.json`. | AI self-review | Replaced with a placeholder. Real handles must be entered by the team. |
+| The first draft printed P(k = 8) at N = 1e23 with a 23-digit exponent, which double precision cannot resolve. | AI self-review | Exponent now printed to 3 significant figures (10^(−3.01×10²²)). |
+
+---
+
+## Template for further entries (copy for each new AI query)
+
+```markdown
+### Prompt X.Y — <date> — <tool> (<team member>)
+> <prompt, verbatim>
+
+**AI output:** <code / text produced, or the files and functions affected>
+**Human modifications:** <what was changed and why>
+**Verification:** <tests run, manual checks, comparison with theory>
+```
