@@ -279,23 +279,6 @@ most disordered macrostate, so ΔS is positive. The code computed S(k₂) − S(
 | `docs/REVIEW_GUIDE.md` | Sections 0, 4 and 11 corrected and updated |
 | `.gitignore` | Ignores `.coverage` and `htmlcov/` |
 
-### Code optimisation of the Session 1 code
-
-*(To be filled in by the team only if an optimisation conversation takes place. For each one: the prompt,
-what the AI proposed, what was changed, and the measured effect, e.g. benchmark times before and after.
-No optimisation was done in this session.)*
-
-| Date | Prompt (summary) | AI proposal | Change made | Measured effect |
-|------|------------------|-------------|-------------|-----------------|
-| | | | | |
-
-### Notes and changes by the team member
-
-| Date | File / section | What was changed or noted | Why |
-|------|----------------|---------------------------|-----|
-| 2026-10-31 | Lab handout vs. code | Reviewed the handouts herself and confirmed that the harmonic mean is what this lab asks for (prompt 2.2) | To decide that M must be changed |
-| 2026-10-31 | Entropy sign | Read the explanation of the sign of ΔS(k₁k₂) and confirmed she understood it before the change was made | To be able to defend it |
-| | *(add your own edits here, with the file and commit)* | | |
 
 ### Verification performed by the AI
 
