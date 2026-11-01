@@ -23,7 +23,8 @@ Line references are to the state of the code on 2026-10-29.
 - `python main.py` runs every calculation in about 5 s. It writes figures to `report/figures/`, numbers to
   `report/results.tex` and table rows to `report/tables/`.
 - `python main.py --benchmark --verify-nmax` reruns the timing study (about 15 min).
-- `python -m pytest -q` runs the 68 tests.
+- `python -m pytest -q` runs the 147 tests (about 15 s). The audit that produced most of them is in
+  [`docs/AUDIT.md`](AUDIT.md).
 
 **What you must understand**
 - **The MKL workaround.** `main.py` and `tests/conftest.py` set `MKL_THREADING_LAYER=SEQUENTIAL` *before*
@@ -162,7 +163,9 @@ Line references are to the state of the code on 2026-10-29.
   integers. After step i the running value equals C(N−k+i, i), so the integer division is always exact.
 - `multiplicity_row(n)` builds exact rows with Pascal's rule; it is used for the plots.
 - `log_binom(n, k)` (line 50) computes ln Ω = lnΓ(N+1) − lnΓ(k+1) − lnΓ(N−k+1) (guide eq. 1) with
-  `scipy.special.gammaln`. It never overflows, even at N = 10²³.
+  `scipy.special.gammaln`. It never overflows, but it subtracts three numbers of size ~ N ln N, so
+  probabilities and entropy differences are reliable only up to N ≈ 10¹⁰ (see `docs/AUDIT.md`, finding F2).
+  For N ~ 10²³ the code uses the analytic Stirling/Gaussian formulas instead.
 - `float_overflow_limits()`, compared with exact integers, finds where double precision fails:
   - 2^N overflows at **N = 1024**;
   - a naive N! overflows at **N = 171**;
@@ -172,7 +175,9 @@ Line references are to the state of the code on 2026-10-29.
 - **Why dividing factorials is a bad idea.** N! overflows long before C(N, k) does.
 - **What Γ is.** Γ(n+1) = n!, and lnΓ is computed directly without ever forming n!.
 - **The answer to Q5 ("max N you can calculate, and why").** In floats, about 1030. With big integers there
-  is no hard limit, only cost. In log-space there is no limit at all.
+  is no hard limit, only cost. In log-space ln Ω never overflows, but P = Ω/2^N loses precision: the measured
+  limit is N ≈ 10¹⁰ for ln P to 10⁻⁴, not "no limit". *(Correction: the first version of the report claimed
+  there was no limit at all.)*
 
 **What to review / verify**
 - [ ] **Check one value by hand.** Ω(100, 50) ≈ 1.009 × 10²⁹, which matches slide 10.
@@ -242,34 +247,40 @@ Line references are to the state of the code on 2026-10-29.
 ## 7. Probabilities and entropy for N = 100 + M (slides Q1–Q9) — `src/thermodynamics.py`, `main.py: part_probabilities`
 
 **What was done**
-- **M and N.** `m_from_nias` gives M = **arithmetic** mean of the last two NIA digits, rounded half-up. You
-  chose this on 2026-10-29: the slides say "average" and the old template said "harmonic". So N = 100 + M.
+- **M and N.** `m_from_nias` gives M = **harmonic** mean of the last two NIA digits, rounded half-up, as the
+  updated lab handout (First_Practice) and the report template require. *(Correction, 2026-10-31: the first
+  version used the arithmetic mean, taken from the old slides, which gave N = 124. That was wrong; see
+  `AI_STATEMENT.md`, session 2.)* So N = 100 + M. The harmonic mean is undefined if a NIA ends in 00; the
+  code raises an error in that case.
 - **Our system.** NIAs 100496704, 100523129, 100534604 and 100599060 give last two digits 04, 29, 04 and 60.
-  Their mean is 24.25, so **M = 24 and N = 124**.
-- **Parity of N.** N = 124 is even, so N/2 = 62 is an exact macrostate. The code still handles odd N
-  (N/2 → ⌊N/2⌋), and `main.py` writes the matching sentence into the report (`\HalfNote`).
+  Their harmonic mean is 4 / (1/4 + 1/29 + 1/4 + 1/60) = 7.26, so **M = 7 and N = 107**.
+- **Parity of N.** N = 107 is **odd**, so N/2 = 53.5 is not a macrostate. The code takes ⌊N/2⌋ = 53, and the
+  report says so (`\HalfNote`). Note that k = 53 and k = 54 are equally probable, both tied for the maximum.
 - **Questions 1–4.** `prob` gives Ω/2^N in log-space. `prob_range` sums with log-sum-exp.
   `prob_tails_range` converts a tails window to a heads window (heads = N − tails).
-- **Questions 5–7.** ΔS/k_B = ln Ω(k₂)/Ω(k₁), for the transition **in the order the slide lists it**
-  (k₁ → k₂). It is reported in units of k_B and in J/K (k_B = 1.380649 × 10⁻²³ J/K).
+- **Questions 5–7.** ΔS(k₁k₂) ≡ S(k₁) − S(k₂), **exactly as the handout defines it**, so ΔS/k_B = ln[Ω(k₁)/Ω(k₂)].
+  It is positive when k₁ is the more disordered macrostate and negative otherwise. *(Correction, 2026-10-31:
+  the first version computed S(k₂) − S(k₁), so the signs of questions 5–7 were reversed.)* It is reported in
+  units of k_B and in J/K (k_B = 1.380649 × 10⁻²³ J/K).
 - **Question 8.** The waiting time for "just 8 heads" is 1/P(N, 8) tosses (mean of a geometric
   distribution), at one toss per second. It is also given in years and in ages of the Universe.
-- **Question 9.** P(N/2)/P(M ± 10), interpreted as k = M + 10 and k = M − 10 heads.
-- **Figure 4.** Panel (a) shows P_k with the ±10 band and markers at 30 and M ± 10. Panel (b) shows S/k_B
+- **Question 9.** P(N/2)/P(N/2 ± 10), i.e. k = 63 and k = 43 heads. The handout's "M ± 10" cannot be read
+  literally any more: with M = 7, M − 10 = −3 would be a negative number of heads.
+- **Figure 4.** Panel (a) shows P_k with the ±10 band and markers at 30 and N/2 ± 10. Panel (b) shows S/k_B
   with the states used in questions 5–8.
-- **Our results for N = 124.** Memorise the orders of magnitude for the defense:
+- **Our results for N = 107.** Memorise the orders of magnitude for the defense:
 
   | Question | Quantity | Value |
   |---|---|---|
-  | 1 | P(k = 30) | 2.46 × 10⁻⁹ |
-  | 2 | P(k = 62) | 0.0715 |
-  | 3 | P(52 ≤ k ≤ 72) heads | 0.9411 |
-  | 4 | P(42 ≤ tails ≤ 82) | 0.999796 |
-  | 5 | ΔS, 87 → 62 heads | +10.29 k_B = 1.42 × 10⁻²² J/K |
-  | 6 | ΔS, 72 → 62 heads | +1.61 k_B = 2.22 × 10⁻²³ J/K |
-  | 7 | ΔS, 62 → 20 heads | −30.86 k_B = −4.26 × 10⁻²² J/K |
-  | 8 | Mean wait for exactly 8 heads (1 toss/s) | 1.93 × 10²⁵ s ≈ 6.1 × 10¹⁷ years |
-  | 9 | P(62)/P(34), P(62)/P(14) | 4.43 × 10⁵, 1.40 × 10¹⁸ |
+  | 1 | P(k = 30) | 1.96 × 10⁻⁶ |
+  | 2 | P(k = 53) (= P(k = 54)) | 0.0766 |
+  | 3 | P(43 ≤ k ≤ 63) heads | 0.9572 |
+  | 4 | P(33 ≤ tails ≤ 73) | 0.999934 |
+  | 5 | ΔS(k₁ = 78, k₂ = 53) | −11.53 k_B = −1.59 × 10⁻²² J/K |
+  | 6 | ΔS(k₁ = 63, k₂ = 53) | −1.68 k_B = −2.31 × 10⁻²³ J/K |
+  | 7 | ΔS(k₁ = 53, k₂ = 20) | +22.37 k_B = +3.09 × 10⁻²² J/K |
+  | 8 | Mean wait for exactly 8 heads (1 toss/s) | 4.98 × 10²⁰ s ≈ 1.58 × 10¹³ years (about 1.1 × 10³ ages of the Universe) |
+  | 9 | P(53)/P(63), P(53)/P(43) | 5.34, 7.77 |
 
   These come from `report/results.tex`. If `team.json` changes, rerun `python main.py` and the values
   update everywhere.
@@ -283,16 +294,16 @@ Line references are to the state of the code on 2026-10-29.
 - [ ] **Finish `team.json`.** The NIAs are done. Still to fill in: the names of members 3–4 (currently
       "Author 3", "Author 4"), the GitHub handles (`user1`, `user3`, `user4`; Olivia's is `olivia614`) and
       the team name ("Group X"). Then rerun `python main.py` so the author block updates.
-- [ ] **Rounding of M.** The guide doesn't specify it. We round half-up and report the exact mean as well.
-      OK?
-- [ ] **Q4 tails vs. heads.** "Between N/2 − 20 and N/2 + 20 tails". With N = 124 even, the window
-      42–82 tails is the same as 42–82 heads, by symmetry. Be ready to explain why the answer is identical to
-      a heads window. (For an odd N the window would be slightly asymmetric in heads.)
-- [ ] **Q7 sign.** ΔS for "N/2 and 20 heads" is computed as N/2 → 20, so it is **negative**. Questions 5 and
-      6 are computed towards N/2, so they are positive. Is that the reading you want, or should all three
-      be reported as magnitudes?
-- [ ] **Q9 interpretation.** "M ± 10, the number of heads in the average of your NIAs" is read as
-      k = M ± 10. Another reading would be N/2 ± 10. Decide, and if in doubt **ask the professor**.
+- [ ] **Rounding of M.** The handout doesn't specify it. We round half-up (7.26 → 7) and report the exact mean
+      as well. OK? Also check how the professor wants a NIA ending in 00 to be handled (harmonic mean undefined).
+- [ ] **Q4 tails vs. heads.** "Between N/2 − 20 and N/2 + 20 tails". With N = 107 **odd**, the
+      window 33–73 tails is the heads window 34–74, which is slightly asymmetric around the centre 53.5.
+      Be ready to explain the conversion heads = N − tails.
+- [ ] **Signs of ΔS (questions 5–7).** We follow the handout's formula ΔS(k₁k₂) ≡ S(k₁) − S(k₂). In 5 and 6, k₁
+      is less disordered than k₂ = N/2, so ΔS < 0; in 7, k₁ = N/2 is the most disordered, so ΔS > 0. Be ready to
+      explain this, and that the report states the convention explicitly.
+- [ ] **Q9 interpretation.** The handout says "M¬ ± 10 heads", which looks like a typo. With the harmonic mean
+      M = 7, so M − 10 would be negative. We read it as N/2 ± 10 (k = 63 and 43). If in doubt **ask the professor**.
 - [ ] **Recompute one value with a calculator**, e.g. P(30) = C(N, 30)/2^N, to make sure you trust the code.
 
 **Likely defense questions**
@@ -307,8 +318,8 @@ Line references are to the state of the code on 2026-10-29.
 **What was done**
 - The report argues that nothing contradicts the Second Law. In statistical mechanics the law is
   **probabilistic**: low-entropy states are allowed but exponentially rare, with relative weight e^(ΔS/k_B).
-  For N = 124 the fluctuations are visible: about 5.9% of tosses fall outside 62 ± 10, and going from 62 to
-  20 heads is "only" e^30.9 ≈ 2.5 × 10¹³ times rarer than the reverse. For N = 10²³ such fluctuations are
+  For N = 107 the fluctuations are visible: about 4.3% of tosses fall outside 53 ± 10, and going from 53 to
+  20 heads is "only" e^22.4 ≈ 5 × 10⁹ times rarer than the reverse. For N = 10²³ such fluctuations are
   never seen.
 
 **What you must understand**
@@ -334,7 +345,7 @@ Line references are to the state of the code on 2026-10-29.
 - **Page count:** 9 pages. The body is pages 1–7 (the limit is "about 5, maximum 8, excluding the title
   page"). Appendices: AI statement, Monte Carlo check, N = 7 listing, code excerpts.
 - The report was compiled with Tectonic (XeLaTeX engine) with no warnings. `report/main.pdf` has the
-  final numbers (N = 124) but still has placeholder names in the author block.
+  final numbers (N = 107) but still has placeholder names in the author block.
 
 **What to review / verify**
 - [ ] **Compile it yourself.** Upload `report/` to Overleaf, or use MiKTeX/TeX Live with `pdflatex`. Check
@@ -380,10 +391,14 @@ Line references are to the state of the code on 2026-10-29.
 ## 11. Tests — `tests/`
 
 **What was done**
-- 68 tests:
+- 147 tests (145 checks and 2 `xfail` tests that document known limitations), 100% line coverage of `src/`
+  and 99% of `main.py`; see `docs/AUDIT.md`:
   - enumeration vs. `math.comb`;
   - generator vs. vectorised vs. multiprocess paths;
-  - log-space vs. exact values up to N = 1000 and at N = 10²³;
+  - log-space vs. exact values up to N = 1000, and vs. Stirling up to N = 10¹⁰ (the N = 10²³ failure is an
+    `xfail` test);
+  - `main.py`: every number of Table 3 against exact fractions, formatting, team files, and a check that
+    `report/results.tex` is not stale;
   - normalisation, symmetry and the ΔS sign;
   - the M formula and the waiting time;
   - the robust N_max estimator with an outlier;

@@ -72,7 +72,7 @@ def sci(x: float, digits: int = 3) -> str:
         return r"\infty"
     exp = math.floor(math.log10(abs(x)))
     mant = x / 10**exp
-    if round(mant, digits - 1) >= 10:
+    if abs(round(mant, digits - 1)) >= 10:  # abs: also for negative x (e.g. Delta S < 0)
         mant, exp = mant / 10, exp + 1
     if -2 <= exp <= 3:
         return f"{x:.{max(digits - 1 - exp, 0)}f}"
@@ -364,18 +364,19 @@ def part_probabilities(macros: MacroWriter, nias: list[str]) -> None:
     n = 100 + m
     h = th.half(n)
     digits = [int(x) % 100 for x in nias]
-    print(f"\n=== N = 100 + M, NIA digits {digits}, mean {sum(digits)/len(digits):.2f} "
+    print(f"\n=== N = 100 + M, NIA digits {digits}, harmonic mean {th.harmonic_mean(digits):.2f} "
           f"-> M = {m}, N = {n}, N/2 -> {h} ===")
 
     macros.add("NIAdigits", ", ".join(f"{d:02d}" for d in digits))
-    macros.add("Mexact", f"{sum(digits) / len(digits):.2f}")
+    macros.add("Mexact", f"{th.harmonic_mean(digits):.2f}")
     macros.add("Mval", str(m))
     macros.add("Nval", str(n))
     macros.add("Nhalf", str(h))
     macros.add("NisOdd", "odd" if n % 2 else "even", math_mode=False)
     macros.add(
         "HalfNote",
-        rf"Since $N$ is odd, ``$N/2$ heads'' is taken as $\lfloor N/2\rfloor={h}$."
+        rf"Since $N$ is odd, ``$N/2$ heads'' is taken as $\lfloor N/2\rfloor={h}$ "
+        rf"(the macrostates $k={h}$ and $k={h + 1}$ are equally probable and tied for the maximum)."
         if n % 2
         else rf"Since $N$ is even, the equal split $N/2={h}$ is a valid macrostate.",
         math_mode=False,
@@ -402,7 +403,7 @@ def part_probabilities(macros: MacroWriter, nias: list[str]) -> None:
     macros.add("ThirtyInSigma", f"{(n / 2 - 30) / sigma:.1f}")
     macros.add("OutsideTenPct", f"{100 * (1 - results['Pten']):.1f}")
 
-    # Q5-Q7 entropy changes (listed order: k_from -> k_to)
+    # Q5-Q7 entropy differences, handout definition: Delta S_{k1 k2} = S(k1) - S(k2)
     for tag, (k1, k2) in {
         "A": (h + 25, h),
         "B": (h + 10, h),
@@ -427,8 +428,9 @@ def part_probabilities(macros: MacroWriter, nias: list[str]) -> None:
                sci_log10(log10_wait - math.log10(th.AGE_OF_UNIVERSE_S)))
     results["wait8_log10_s"] = log10_wait
 
-    # Q9 N/2 vs M +- 10 heads
-    for tag, kk in (("Plus", m + 10), ("Minus", m - 10)):
+    # Q9 N/2 vs N/2 +- 10 heads (reading "M +- 10" of the handout as N/2 +- 10: with the
+    # harmonic mean M is small, so M - 10 would be a negative number of heads)
+    for tag, kk in (("Plus", h + 10), ("Minus", h - 10)):
         macros.add(f"M{tag}", str(kk))
         macros.add(f"P{tag}", sci(th.prob(n, kk)))
         macros.add(f"Ratio{tag}", sci(th.likelihood_ratio(n, h, kk)))
@@ -444,7 +446,7 @@ def part_probabilities(macros: MacroWriter, nias: list[str]) -> None:
     ax1.plot(k, p, "k.-", ms=2.5, lw=0.7)
     sel = (k >= h - 10) & (k <= h + 10)
     ax1.fill_between(k[sel], p[sel], alpha=0.35, label=r"$N/2\pm10$ heads")
-    for kk, lab in ((30, "30"), (m + 10, "$M+10$"), (m - 10, "$M-10$")):
+    for kk, lab in ((30, "30"), (h + 10, "$N/2+10$"), (h - 10, "$N/2-10$")):
         ax1.axvline(kk, ls=":", lw=0.8, color="tab:red")
         ax1.text(kk, p.max() * 0.9, lab, rotation=90, fontsize=7, ha="right", color="tab:red")
     ax1.set_xlabel("Number of heads $k$")
@@ -480,8 +482,8 @@ def part_thermo_limit(macros: MacroWriter) -> None:
     log10_ratio = th.log10_prob_fraction(big, x) - th.log10_prob_fraction(big, 0.5)
     ds_kb = log10_ratio * math.log(10)
     macros.add("TLlogRatio", sci(log10_ratio, 3))
-    macros.add("TLdSkB", sci(ds_kb, 3))
-    macros.add("TLdSSI", sci(th.K_B * ds_kb, 3))
+    macros.add("TLdSkB", sci(abs(ds_kb), 3))  # magnitude |Delta S|
+    macros.add("TLdSSI", sci(th.K_B * abs(ds_kb), 3))
     # probability that |k/N - 1/2| > 1e-10 (Gaussian tail, two-sided)
     eps = 1e-10
     z = 2 * eps * math.sqrt(big)

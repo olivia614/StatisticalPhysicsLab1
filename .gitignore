@@ -16,6 +16,10 @@ report/*.fdb_latexmk
 report/*.bbl
 report/*.blg
 
+# Coverage reports
+.coverage
+htmlcov/
+
 # OS / editor
 .DS_Store
 Thumbs.db

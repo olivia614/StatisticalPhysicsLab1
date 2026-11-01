@@ -54,8 +54,63 @@ def test_float_overflow_limits():
     assert 1020 < lim["central_binomial"] < 1035
 
 
-def test_log_binom_huge_n():
-    # Stirling check at N = 1e23: ln C(N, N/2) ~ N ln 2 - 0.5 ln(pi N / 2)
+def test_float_overflow_limits_are_exact():
+    lim = cb.float_overflow_limits()
+    fmax = int(cb.FLOAT_MAX)
+    # smallest N such that the quantity exceeds the largest double
+    assert 2 ** lim["total_states"] > fmax >= 2 ** (lim["total_states"] - 1)
+    assert math.factorial(lim["factorial"]) > fmax >= math.factorial(lim["factorial"] - 1)
+    n = lim["central_binomial"]
+    assert math.comb(n, n // 2) > fmax >= math.comb(n - 1, (n - 1) // 2)
+    assert (lim["total_states"], lim["factorial"], lim["central_binomial"]) == (1024, 171, 1030)
+
+
+def test_binom_float_edges():
+    assert cb.binom_float(10, -1) == 0.0
+    assert cb.binom_float(10, 11) == 0.0
+    assert cb.binom_float(10, 0) == 1.0
+    assert cb.binom_float(10, 10) == 1.0
+    assert cb.binom_float(60, 30) == pytest.approx(math.comb(60, 30), rel=1e-12)
+
+
+def test_log_binom_out_of_range_is_minus_infinity():
+    # Omega = 0 -> ln Omega = -inf -> P = 0 (no exception, no nan)
+    with np.errstate(all="ignore"):
+        assert cb.log_binom(107, -1) == -np.inf
+        assert cb.log_binom(107, 108) == -np.inf
+
+
+def test_log_binom_row_and_vector_input():
+    row = cb.log_binom_row(12)
+    assert row.shape == (13,)
+    assert np.allclose(np.exp(row), [math.comb(12, k) for k in range(13)], rtol=1e-12)
+    ks = np.array([0, 5, 12])
+    assert np.allclose(cb.log_binom(12, ks), np.log([1, math.comb(12, 5), 1]))
+    assert isinstance(cb.log_binom(12, 5), float)
+
+
+@pytest.mark.parametrize("e", [4, 6, 8, 10])
+def test_log_prob_central_peak_is_reliable_up_to_1e10(e):
+    """ln P(N/2) against Stirling's formula, absolute error < 1e-4 up to N = 1e10."""
+    n = 10.0**e
+    stirling = -0.5 * math.log(math.pi * n / 2) - 1 / (4 * n)
+    assert cb.log_binom(n, n / 2) - n * math.log(2) == pytest.approx(stirling, abs=1e-4)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="KNOWN LIMITATION (docs/AUDIT.md, finding F2): log-gamma subtracts numbers ~ N ln N, "
+    "so ln P(N/2) is meaningless for N >~ 1e15. The report uses the analytic Stirling form there.",
+)
+def test_log_binom_not_reliable_at_1e23():
     n = 1e23
-    expected = n * math.log(2) - 0.5 * math.log(math.pi * n / 2)
-    assert cb.log_binom(n, n / 2) == pytest.approx(expected, rel=1e-12)
+    assert cb.log_binom(n, n / 2) - n * math.log(2) == pytest.approx(
+        -0.5 * math.log(math.pi * n / 2), abs=1e-3
+    )
+
+
+def test_log_binom_huge_n_leading_term_only():
+    # What the old test really verified: only the dominant term N ln 2 (relative 1e-12).
+    # It says nothing about the O(ln N) correction, hence the tests above.
+    n = 1e23
+    assert cb.log_binom(n, n / 2) == pytest.approx(n * math.log(2), rel=1e-12)

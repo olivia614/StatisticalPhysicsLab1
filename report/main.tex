@@ -95,7 +95,7 @@ Development followed a feature-branch workflow on GitHub, with direct pushes to 
     \item \texttt{src/microstates.py}: bitwise enumeration (generator and chunked NumPy versions), benchmark utilities.
     \item \texttt{src/combinatorics.py}: exact big-integer and log-gamma binomial coefficients, floating-point limits.
     \item \texttt{src/thermodynamics.py}: probabilities, entropy, waiting times, Gaussian limit, Monte Carlo tosses.
-    \item \texttt{tests/}: 68 \texttt{pytest} unit tests checking every routine against \texttt{math.comb} and analytical identities.
+    \item \texttt{tests/}: 147 \texttt{pytest} tests checking every routine, and the numbers written to this report, against \texttt{math.comb} and exact rational arithmetic (100\% line coverage of \texttt{src/}, 99\% of \texttt{main.py}); the audit is in \texttt{docs/\allowbreak AUDIT.md}.
     \item \texttt{main.py}: orchestrates all calculations; \texttt{report/}: \LaTeX{} source and figures.
 \end{itemize}
 
@@ -173,7 +173,7 @@ There is no hard limit with the methods above; only the representation limits it
 \item A naive $N!/[k!(N-k)!]$ already fails at $N=\LimFact$.
 \item The largest multiplicity $\Omega(N,N/2)$ overflows at $N=\LimCentral$.
 \end{itemize}
-Arbitrary-precision integers remove the overflow, at a cost that grows with the number of digits ($\approx0.3N$). Eq.~\eqref{eq:lgamma} has no limit at all: the unit tests evaluate it at $N=10^{23}$, where it agrees with Stirling's formula to $10^{-12}$.
+Arbitrary-precision integers remove the overflow, at a cost that grows with the number of digits ($\approx0.3N$). Eq.~\eqref{eq:lgamma} never overflows, but it subtracts three numbers of size $\sim N\ln N$, so its absolute error is $\sim10^{-16}N\ln N$. This is negligible for $\ln\Omega$ itself, but it spoils probabilities and entropy differences: we measured that $\ln P(N/2)$ agrees with Stirling's formula to better than $10^{-4}$ up to $N=10^{10}$, to $10^{-2}$ at $N=10^{13}$, and is meaningless beyond $N\approx10^{15}$. For $N\sim10^{23}$ the analytic Stirling/Gaussian expressions below are therefore used instead.
 
 \subsection{Thermodynamic limit ($N \rightarrow 10^{23}$)}
 Applying Stirling's formula $\ln N!\approx N\ln N-N+\tfrac12\ln(2\pi N)$ to Eq.~\eqref{eq:omega} and expanding around $k=N/2$ to second order in $\delta=k-N/2$ gives the de~Moivre--Laplace result
@@ -202,14 +202,14 @@ The distribution is then effectively a delta function: the system is always foun
 %==========================================================================
 
 \subsection{Parameter assignment}
-$M$ is the arithmetic mean of the last two digits of the team members' NIAs ($\NIAdigits$), which is $\Mexact$, rounded to $M=\Mval$. Hence $N=100+M=\Nval$ coins, with $2^N=\TotalStates$ microstates. \HalfNote
+$M$ is the harmonic mean of the last two digits of the team members' NIAs ($\NIAdigits$), $M=n/\sum_i d_i^{-1}=\Mexact$, rounded to $M=\Mval$. Hence $N=100+M=\Nval$ coins, with $2^N=\TotalStates$ microstates. \HalfNote
 
 \subsection{Probability and entropy analysis}
-All probabilities follow from Eq.~\eqref{eq:PS}. Range probabilities are sums over $k$, evaluated with a log-sum-exp to avoid underflow. Entropy changes for a transition $k_1\to k_2$ are
+All probabilities follow from Eq.~\eqref{eq:PS}. Range probabilities are sums over $k$, evaluated with a log-sum-exp to avoid underflow. The entropy difference between two macrostates is defined as $\Delta S_{k_1k_2}\equiv S(k_1)-S(k_2)$, so that
 \begin{equation}
-\frac{\Delta S}{\kB}=\ln\frac{\Omega(N,k_2)}{\Omega(N,k_1)},\qquad \kB=1.380649\times10^{-23}\ \mathrm{J/K}.
+\frac{\Delta S_{k_1k_2}}{\kB}=\ln\frac{\Omega(N,k_1)}{\Omega(N,k_2)},\qquad \kB=1.380649\times10^{-23}\ \mathrm{J/K}.
 \end{equation}
-Results are collected in Table~\ref{tab:entropy} and illustrated in Fig.~\ref{fig:prob}.
+$\Delta S_{k_1k_2}$ is positive when $k_1$ is the more disordered macrostate (larger $\Omega$) and negative otherwise. Results are collected in Table~\ref{tab:entropy} and illustrated in Fig.~\ref{fig:prob}.
 
 \begin{table}[H]
 \centering
@@ -224,13 +224,13 @@ Results are collected in Table~\ref{tab:entropy} and illustrated in Fig.~\ref{fi
 3 & $P(\Nhalf-10\le k\le\Nhalf+10)$ heads & $\PtenHeads$ \\
 4 & $P(\Nhalf-20\le N-k\le\Nhalf+20)$ tails & $\PtwentyTails$ \\
 \midrule
-5 & $\Delta S$: $k=\dSAfrom\to\dSAto$ heads ($\Omega$ ratio $\dSAratio$) & $\dSA\,\kB=\dSASI$ J/K \\
-6 & $\Delta S$: $k=\dSBfrom\to\dSBto$ heads ($\Omega$ ratio $\dSBratio$) & $\dSB\,\kB=\dSBSI$ J/K \\
-7 & $\Delta S$: $k=\dSCfrom\to\dSCto$ heads ($\Omega$ ratio $\dSCratio$) & $\dSC\,\kB=\dSCSI$ J/K \\
+5 & $\Delta S_{k_1k_2}$: $k_1=\dSAfrom$, $k_2=\dSAto$ heads & $\dSA\,\kB=\dSASI$ J/K \\
+6 & $\Delta S_{k_1k_2}$: $k_1=\dSBfrom$, $k_2=\dSBto$ heads & $\dSB\,\kB=\dSBSI$ J/K \\
+7 & $\Delta S_{k_1k_2}$: $k_1=\dSCfrom$, $k_2=\dSCto$ heads & $\dSC\,\kB=\dSCSI$ J/K \\
 \midrule
 8 & $P(k=8)$; mean wait at 1 toss/s & $\PeightHeads$;\ \ $\WaitEightS$ s \\
-9 & $P(\Nhalf)/P(M+10=\MPlus)$ & $\RatioPlus$ \\
-  & $P(\Nhalf)/P(M-10=\MMinus)$ & $\RatioMinus$ \\
+9 & $P(\Nhalf)/P(N/2+10=\MPlus)$ & $\RatioPlus$ \\
+  & $P(\Nhalf)/P(N/2-10=\MMinus)$ & $\RatioMinus$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -238,7 +238,7 @@ Results are collected in Table~\ref{tab:entropy} and illustrated in Fig.~\ref{fi
 \begin{figure}[!htb]
 \centering
 \includegraphics[width=0.92\linewidth]{figures/fig_probabilities.pdf}
-\caption{(a) $P_k$ for $N=\Nval$; the shaded band is $\Nhalf\pm10$ heads and dotted lines mark $k=30$ and $M\pm10$. (b) Entropy $S/\kB=\ln\Omega$; points mark the states used in questions 5--8.}
+\caption{(a) $P_k$ for $N=\Nval$; the shaded band is $\Nhalf\pm10$ heads and dotted lines mark $k=30$ and $N/2\pm10$. (b) Entropy $S/\kB=\ln\Omega$; points mark the states used in questions 5--8.}
 \label{fig:prob}
 \end{figure}
 
@@ -249,24 +249,24 @@ Although $\Nhalf$ heads is the single most probable outcome, its probability is 
 Each toss is an independent trial with success probability $p=P(N,8)$. The number of tosses until the first success is therefore geometric, with mean $1/p$. At one toss per second the expected wait is $\WaitEightS$\,s, which is $\WaitEightYears$ years or $\WaitEightUniverse$ times the age of the Universe.
 
 \paragraph{Question 9.}
-The equal split is $\RatioPlus$ times more likely than $M+10=\MPlus$ heads, and $\RatioMinus$ times more likely than $M-10=\MMinus$ heads.
+The equal split is $\RatioPlus$ times more likely than $N/2+10=\MPlus$ heads, and $\RatioMinus$ times more likely than $N/2-10=\MMinus$ heads.
 
 \subsection{Second Law of Thermodynamics interpretation (question 10)}
-None of these results contradicts the Second Law, because in statistical mechanics the Second Law is a statement about probabilities, not a strict prohibition. The microscopic dynamics (re-tossing coins) are reversible, and every microstate is equally likely, including the ``ordered'' ones. A transition from $k=\Nhalf$ to $k=20$ lowers the entropy by $\dSC\,\kB$. It is not forbidden; it is simply $\Omega(\Nhalf)/\Omega(20)=e^{\,\dSCabs}$ times rarer than the reverse. For $N=\Nval$, fluctuations of a few $\kB$ (questions 5--6) do occur: about $\OutsideTenPct\%$ of tosses fall outside $\Nhalf\pm10$. These fluctuations are visible only because $N$ is small. The Second Law is the statement that the macrostate with maximum $\Omega$ (maximum $S$) overwhelmingly dominates, so a spontaneous evolution almost always goes towards higher entropy.
+None of these results contradicts the Second Law, because in statistical mechanics the Second Law is a statement about probabilities, not a strict prohibition. The microscopic dynamics (re-tossing coins) are reversible, and every microstate is equally likely, including the ``ordered'' ones. A transition from $k=\Nhalf$ to $k=20$ lowers the entropy by $\Delta S_{k_1k_2}=\dSC\,\kB$ (question 7). It is not forbidden; it is simply $\Omega(\Nhalf)/\Omega(20)=e^{\,\dSCabs}$ times rarer than the reverse. For $N=\Nval$, fluctuations of a few $\kB$ (questions 5--6) do occur: about $\OutsideTenPct\%$ of tosses fall outside $\Nhalf\pm10$. These fluctuations are visible only because $N$ is small. The Second Law is the statement that the macrostate with maximum $\Omega$ (maximum $S$) overwhelmingly dominates, so a spontaneous evolution almost always goes towards higher entropy.
 
 \subsection{The limit $N\gg1$ (question 11)}
 For $N\sim10^{23}$, Eq.~\eqref{eq:gauss} and the log-space routines give:
 \begin{itemize}
-\item \textbf{Fixed $k$ (30 heads, 8 heads, $M\pm10$).} The probability is $\sim2^{-N}$. For example, $P(k=8)=\TLPeight$, so the waiting time and the likelihood ratios of question 9 become $10^{\sim3\times10^{22}}$. These events never happen.
+\item \textbf{Fixed $k$ (30 heads, 8 heads, $N/2\pm10$).} The probability is $\sim2^{-N}$. For example, $P(k=8)=\TLPeight$, so the waiting time and the likelihood ratios of question 9 become $10^{\sim3\times10^{22}}$. These events never happen.
 \item \textbf{$P(N/2)$} $=\sqrt{2/\pi N}=\TLPhalf\to0$, and so does any window of fixed width $\pm10$ or $\pm20$: that width is negligible compared with $\sigma=\TLsigma$. What tends to 1 is the probability of any \emph{relative} window $|k/N-\tfrac12|<\varepsilon$.
-\item \textbf{Entropy.} Fixed offsets ($N/2+25\to N/2$) give $\Delta S\simeq2\delta^2\kB/N\approx10^{-20}\kB\to0$. Macroscopic offsets ($k/N=0.501\to0.5$) give $\Delta S=\TLdSkB\,\kB$ in magnitude, i.e.\ about $\TLdSSI$\,J/K, which is a measurable thermodynamic entropy.
+\item \textbf{Entropy.} Fixed offsets ($N/2+25\to N/2$) give $|\Delta S|\simeq2\delta^2\kB/N\approx10^{-20}\kB\to0$. Macroscopic offsets ($k/N=0.501\to0.5$) give $|\Delta S|=\TLdSkB\,\kB$, i.e.\ about $\TLdSSI$\,J/K, which is a measurable thermodynamic entropy.
 \end{itemize}
-In the thermodynamic limit, therefore, the probabilistic statement of question 10 becomes a deterministic law. Entropy-decreasing macroscopic fluctuations have probabilities $\exp(-\Delta S/\kB)\sim10^{-10^{17}}$, and the Second Law holds without exception in practice.
+In the thermodynamic limit, therefore, the probabilistic statement of question 10 becomes a deterministic law. Entropy-decreasing macroscopic fluctuations have probabilities $\exp(-|\Delta S|/\kB)\sim10^{-10^{17}}$, and the Second Law holds without exception in practice.
 
 %==========================================================================
 \section{Conclusion}
 %==========================================================================
-Bitwise enumeration confirms $\Omega(N,k)=\binom Nk$ directly, but the $2^N$ cost limits it to $N=\NverifyVal$ in five minutes, even with vectorisation and parallelism. Log-space combinatorics removes all overflow limits and allows exact statements for $N=\Nval$ and asymptotic ones for $N=10^{23}$. The binomial distribution narrows relative to $N$ as $N^{-1/2}$. Entropy-lowering fluctuations, observable for $N\sim10^2$, become unobservable for macroscopic $N$. This is the statistical origin of the Second Law of Thermodynamics.
+Bitwise enumeration confirms $\Omega(N,k)=\binom Nk$ directly, but the $2^N$ cost limits it to $N=\NverifyVal$ in five minutes, even with vectorisation and parallelism. Log-space combinatorics removes the overflow limit and allows exact statements for $N=\Nval$ (it is reliable up to $N\sim10^{10}$), while the asymptotic statements for $N=10^{23}$ use Stirling's formula analytically. The binomial distribution narrows relative to $N$ as $N^{-1/2}$. Entropy-lowering fluctuations, observable for $N\sim10^2$, become unobservable for macroscopic $N$. This is the statistical origin of the Second Law of Thermodynamics.
 
 \appendix
 %==========================================================================
@@ -274,7 +274,8 @@ Bitwise enumeration confirms $\Omega(N,k)=\binom Nk$ directly, but the $2^N$ cos
 %==========================================================================
 Following Phase~3 of the course guidelines, AI assistance (Anthropic Claude Code, model Claude Opus~5.5) was used for planning, code generation and drafting this report. Every prompt, the files generated and the team's modifications are logged in \texttt{AI\_STATEMENT.md} at the repository root. The planning transcript is in \texttt{docs/ai\_plans/}. Verification consisted of:
 \begin{enumerate}
-\item 68 \texttt{pytest} unit tests comparing every AI-written routine with exact integer arithmetic (\texttt{math.comb}), identities ($\sum_k\Omega=2^N$, symmetry) and published values ($\Omega(100,50)\approx1.009\times10^{29}$).
+\emergencystretch=3em
+\item 147 \texttt{pytest} tests comparing every AI-written routine with exact integer arithmetic (\texttt{math.comb}), identities ($\sum_k\Omega=2^N$, symmetry) and published values ($\Omega(100,50)\approx1.009\times10^{29}$). A later audit added tests of \texttt{main.py} that check each number of Table~\ref{tab:entropy} against exact fractions, and a mutation analysis (11 deliberately injected bugs, 10 detected, 1 equivalent); see \texttt{docs/\allowbreak AUDIT.md}.
 \item An independent Monte Carlo cross-check of the distribution ($\chi^2/\text{dof}=\MCchi/\MCdof$).
 \item Re-derivation by the team of all formulas in Sections~3--4.
 \end{enumerate}

@@ -31,8 +31,24 @@ AGE_OF_UNIVERSE_S = 13.787e9 * SECONDS_PER_YEAR  # Planck 2018
 # --------------------------------------------------------------------------- #
 
 
+def harmonic_mean(values: Iterable[int]) -> float:
+    """Harmonic mean n / sum(1/x_i) of strictly positive numbers."""
+    vals = list(values)
+    if not vals:
+        raise ValueError("at least one value is required")
+    if any(v <= 0 for v in vals):
+        raise ValueError(
+            "the harmonic mean is undefined when a value is 0 "
+            "(a NIA ending in 00); ask the instructor how to proceed"
+        )
+    return len(vals) / sum(1.0 / v for v in vals)
+
+
 def m_from_nias(nias: Iterable[int | str]) -> int:
-    """M = arithmetic mean of the last two digits of each NIA, rounded.
+    """M = harmonic mean of the last two digits of each NIA, rounded.
+
+    The lab handout (First_Practice, updated version) defines M as the
+    *harmonic* average of the last two digits of the team members' NIAs.
 
     Parameters
     ----------
@@ -45,9 +61,7 @@ def m_from_nias(nias: Iterable[int | str]) -> int:
         M rounded to the nearest integer (halves round up).
     """
     digits = [int(str(nia).strip()) % 100 for nia in nias]
-    if not digits:
-        raise ValueError("at least one NIA is required")
-    return math.floor(sum(digits) / len(digits) + 0.5)
+    return math.floor(harmonic_mean(digits) + 0.5)
 
 
 def system_size(nias: Iterable[int | str]) -> int:
@@ -110,17 +124,19 @@ def entropy(n: float, k: float) -> float:
     return float(log_binom(n, k))
 
 
-def entropy_change(n: float, k_from: float, k_to: float) -> float:
-    """Delta S / k_B = ln Omega(N, k_to) - ln Omega(N, k_from).
+def entropy_change(n: float, k1: float, k2: float) -> float:
+    """Delta S_{k1 k2} / k_B = S(k1)/k_B - S(k2)/k_B = ln [Omega(N, k1) / Omega(N, k2)].
 
-    Positive when the system moves towards a macrostate with more microstates.
+    This is the definition of the lab handout: Delta S_{k1 k2} = S(k1) - S(k2).
+    It is positive when k1 has more microstates (more disorder) than k2 and
+    negative otherwise.
     """
-    return float(log_binom(n, k_to) - log_binom(n, k_from))
+    return float(log_binom(n, k1) - log_binom(n, k2))
 
 
-def entropy_change_si(n: float, k_from: float, k_to: float) -> float:
-    """Delta S in J/K."""
-    return K_B * entropy_change(n, k_from, k_to)
+def entropy_change_si(n: float, k1: float, k2: float) -> float:
+    """Delta S_{k1 k2} = S(k1) - S(k2) in J/K."""
+    return K_B * entropy_change(n, k1, k2)
 
 
 # --------------------------------------------------------------------------- #
@@ -174,6 +190,11 @@ def log10_prob_fraction(n: float, x: float) -> float:
 
     H(x) = -x ln x - (1 - x) ln(1 - x) is the mixing entropy per coin.
     Useful for N ~ 1e23 where even the exponent is astronomically large.
+
+    Only the leading order is kept (the prefactor -1/2 ln(2 pi N x (1-x)) is
+    dropped), so use it for *differences* between two fractions x. On its own it
+    is wrong by that prefactor: at x = 1/2 it returns 0 instead of
+    -1/2 log10(pi N / 2).
     """
     if x in (0.0, 1.0):
         h = 0.0

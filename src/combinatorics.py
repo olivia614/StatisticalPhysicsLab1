@@ -7,7 +7,10 @@ Three evaluations are provided:
 * ``binom_float``  - the same product in IEEE-754 double precision; overflows
   once Omega exceeds ~1.8e308.
 * ``log_binom``    - ln Omega via the log-gamma function (guide eq. 1); never
-  overflows and is vectorised over k.
+  overflows and is vectorised over k. Caveat: it subtracts three numbers of
+  size ~ N ln N, so its *absolute* error is ~ 1e-16 N ln N. That is harmless
+  for ln Omega itself, but it ruins differences such as ln P = ln Omega - N ln 2
+  and Delta S once N is larger than ~1e10 (see docs/AUDIT.md).
 """
 
 from __future__ import annotations
@@ -55,7 +58,10 @@ def log_binom(n: float, k: np.ndarray | float) -> np.ndarray | float:
     Parameters
     ----------
     n : float
-        Number of coins (may be huge, e.g. 1e23).
+        Number of coins. ln Omega never overflows, but differences of ln Omega
+        (probabilities, entropy changes) are reliable only for N <~ 1e10.
+        For N ~ 1e23 use the Stirling/Gaussian expressions in
+        ``thermodynamics.py`` instead.
     k : array_like
         Number(s) of heads, ``0 <= k <= n``.
     """
